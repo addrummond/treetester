@@ -150,7 +150,7 @@ function treeToSimpleWidthTree(tree, measureWidth) {
         var lw = measureWidth(tree);
         return {
             children: cs,
-            width: Math.max(w, lw),
+            width: w,
             label: tree.label,
             labelWidth: lw
         };
@@ -169,14 +169,18 @@ function widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset) {
         }
     }
     else {
-        var x = xOffset + (tree.width / 2);
+        var cs = [ ];
         var childY = yOffset + levelHeight;
         var xo = xOffset;
-        var cs = [ ];
         for (var i = 0; i < tree.children.length; ++i) {
             cs.push(widthTreeToPositionTree(tree.children[i], levelHeight, xo, childY));
             xo += tree.children[i].width;
         }
+
+        let w = tree.width;
+
+        var x = xOffset + (tree.width / 2);
+
         return {
             label: tree.label,
             labelWidth: tree.labelWidth,
@@ -249,7 +253,7 @@ function layoutTree(tree, measureWidth, levelHeight, xOffset, yOffset) {
     tree = treeToSimpleWidthTree(tree, measureWidth);
     tree = widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset);
     ///console.log("BEFORE SQUISH", tree);
-    //horizontalSquishPositionTree(tree);
+    horizontalSquishPositionTree(tree);
     return tree;
 }
 
@@ -281,14 +285,14 @@ function renderTree(ctx, tree, fontSize, levelHeight, hpad) {
 document.addEventListener("DOMContentLoaded", function(event) {
     var SCALE = 2;
 
-    let w = document.documentElement.clientWidth || 500*SCALE;
-    let h = document.documentElement.clientHeight || 500*SCALE;
+    let w = document.documentElement.clientWidth || 500;
+    let h = document.documentElement.clientHeight || 500;
 
     var canvas = document.getElementById("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.width = "500px";
-    canvas.style.height = "500px";
+    canvas.width = w*SCALE;
+    canvas.height = h*SCALE;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
 
     var ctx = canvas.getContext("2d");
     ctx.scale(SCALE, SCALE);
