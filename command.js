@@ -1,41 +1,5 @@
 var PRIME = "\u2032";
 
-var testTree = {
-    label: "foo",
-    children: [
-        {
-            label: "bar",
-            children: [ ]
-        },
-        {
-            label: "amp",
-            children: [
-                {
-                    label: "a",
-                    children: [ ]
-                },
-                {
-                    label: "b",
-                    children: [ ]
-                }
-            ]
-        }
-    ]
-};
-var simpleTestTree = {
-    label: "foo",
-    children: [
-        {
-            label: "bar",
-            children: [ ]
-        },
-        {
-            label: "a",
-            children: [ ]
-        }
-    ]
-};
-
 function addParents(tree) {
     if (tree.children.length == 0) {
         tree.parent = null;
@@ -48,86 +12,67 @@ function addParents(tree) {
     }
 }
 
-function randomXbar(nNodes, letters) {
-    var state = {
-        frontiers: [ ],
-        letterI: 0,
-        nNodes: nNodes
-    };
-    var tree = randomXbar_(
-        letters,
-        state
-    );
-    while (state.nNodes > 0 && state.frontiers.length > 0) {
-        var fr = state.frontiers[parseInt(Math.round(Math.random()*(state.frontiers.length-1)))];
-        if (fr[0] == 'comp') {
-            var x = randomXbar_(letters, state);
-            if (x !== null) {
-                console.log("PUSH!!!");
-                fr[1].children.push(x);
-            }
-        }
-        else {
-            var x = randomXbar_(letters, state);
-            if (x !== null) {
-                console.log("PUSH!!!")
-                fr[1].children.unshift(x);
-            }
-        }
+function shuffle(array) {
+    var m = array.length, t, i;
+    // While there remain elements to shuffle…
+    while (m) {
+        // Pick a remaining element…
+        i = Math.floor(Math.random() * m--);
+        // And swap it with the current element.
+        t = array[m];
+        array[m] = array[i];
+        array[i] = t;
     }
-
-    return tree;
 }
 
-function randomXbar_(letters, state) {
-    if (state.nNodes == 0) {
-        return null;      
+// Creates a random tree that accords with the X-bar template
+// with the specified number of phrases.
+function randomTree(nPhrases, letters) {
+    var treelets = new Array(nPhrases);
+    for (var i = 0; i < treelets.length; ++i) {
+        var l = letters[i % letters.length];
+        treelets[i] = {
+            label: l + 'P',
+            children: [{
+                label: l + PRIME,
+                children: [{
+                    label: l,
+                    children: [ ]
+                }]
+            }]
+        };
     }
 
-    var hasSpec = (state.nNodes > 1 && (Math.random() < 0.5));
-    var hasComp = (state.nNodes > 1 && (Math.random() < 0.5));
-    if (hasSpec && hasComp && state.nNodes == 2) {
-        if (Math.random() < 0.5)
-            hasSpec = false;
-        else
-            hasComp = false;
-    }
-    var head = letters.charAt(state.letterI++);
-    var barChildren = [ { label: head, children: [ ] } ];
-    var pChildren = [ ];
-    if (hasComp) {
-        let r = randomXbar_(letters, state);
-        if (r != null) {
-            barChildren.push(r);
+    shuffle(treelets);
+
+    while (treelets.length > 1) {
+        if (treelets[0].children.length == 1 && treelets[0].children[0].children.length == 1) {
+            // We can add either a head or a specifier, so choose at random.
+            if (Math.random() < 0.5) {
+                treelets[0].children.unshift(treelets[treelets.length-1]);
+            }
+            else {
+                treelets[0].children[0].children.push(treelets[treelets.length-1])
+            }
+            treelets.splice(treelets.length-1, 1); // Remove last element
+        }
+        else if (treelets[0].children.length == 2 && treelets[0].children[0].length == 1) {
+            treelets[0].children[0].children.push(treelets[treelets.length-1])
+            treelets.splice(treelets.length-1, 1); // Remove last element
+        }
+        else if (treelets[0].children.length == 1) {
+            treelets[0].children.unshift(treelets[treelets.length-1]);
+            treelets.splice(treelets.length-1, 1); // Remove last element
+        }
+        else {
+            // If the first treelet has both a head and a spec, put it at the end.
+            var tmp = treelets[treelets.length - 1];
+            treelets[treelets.length-1] = treelets[0];
+            treelets[0] = tmp;
         }
     }
-    if (hasSpec && state.nNodes > 0) {
-        let r = randomXbar_(letters, state);
-        if (r != null) {
-            pChildren.push(r);
-        }
-    }
 
-    --state.nNodes;
-    state.nNodes -= hasSpec;
-    state.nNodes -= hasComp;
-
-    pChildren.push({
-        label: head + PRIME,
-        children: barChildren
-    });
-
-    var tree = {
-        label: head + "P",
-        children: pChildren
-    };
-
-    if (! hasComp)
-        state.frontiers.push(['comp', pChildren[0]]);
-    if (! hasSpec)
-        state.frontiers.push(['spec', tree]);
-
-    return tree;
+    return treelets[0];
 }
 
 function treeToSimpleWidthTree(tree, measureWidth) {
@@ -244,7 +189,10 @@ function horizontalSquishPositionTree(tree) {
                 }
             }
             totalDiff += minDiff;
-            shiftPositionTreeX(moving, -totalDiff);
+            var r = totalDiff/2;
+            var l = -totalDiff/2;
+            shiftPositionTreeX(target, r);
+            shiftPositionTreeX(moving, l);
         }
     }
 }
@@ -252,8 +200,7 @@ function horizontalSquishPositionTree(tree) {
 function layoutTree(tree, measureWidth, levelHeight, xOffset, yOffset) {
     tree = treeToSimpleWidthTree(tree, measureWidth);
     tree = widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset);
-    ///console.log("BEFORE SQUISH", tree);
-    horizontalSquishPositionTree(tree);
+    //horizontalSquishPositionTree(tree);
     return tree;
 }
 
@@ -273,9 +220,9 @@ function renderTree(ctx, tree, fontSize, levelHeight, hpad) {
     (function rec(tree) {
         ctx.fillText(hpad + tree.label + hpad, tree.x - tree.labelWidth/2, tree.y + fontSize);
         for (var i = 0; i < tree.children.length; ++i) {
-            ctx.moveTo(tree.x, tree.y + fontSize * 1.1);
+            ctx.moveTo(tree.x, tree.y + fontSize * 1.25);
             ctx.lineTo(tree.children[i].x,
-                       tree.children[i].y + fontSize*0.2);
+                       tree.children[i].y - fontSize*0.05);
             ctx.stroke();
             rec(tree.children[i]);
         }
@@ -297,18 +244,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
     var ctx = canvas.getContext("2d");
     ctx.scale(SCALE, SCALE);
 
-    let tree = randomXbar(3, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    console.log("TREE", tree);
-    renderTree(ctx, tree, 12, 20, "   ");
+    let tree = randomTree(10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    renderTree(ctx, tree, 12, 30, "   ");
 });
-
-/*function treeTriangle(ctx, tree) {
-    if (tree.children.length == 0) {
-        var m = ctx.measureText(tree.label);
-        
-    }
-}
-
-function renderTree(ctx, tree, offsetX, offsetY) {
-
-}*/
