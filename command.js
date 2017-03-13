@@ -97,6 +97,22 @@ function randomPathPair(tree) {
     return [paths[i1], paths[i2]];
 }
 
+function checkCCommand(tree, path1, path2) {
+    if (path1.indexOf(path2) == 0 || path2.indexOf(path1) == 0)
+        return false;
+
+    var commander = tree;
+    var lastNonunary = 0;
+    for (var i = 0; i < path1.length; ++i) {
+        var c = path1.charCodeAt(i) - '0'.charCodeAt(0);
+        commander = commander.children[c];
+        if (commander.children.length > 1)
+            lastNonunary = i;
+    }
+
+    return path2.indexOf(path1.substr(0, lastNonunary)) == 0;
+}
+
 function treeToSimpleWidthTree(tree, measureWidth) {
     if (tree.children.length == 0) {
         return {
@@ -281,7 +297,7 @@ function renderTree(ctx, tree, fontSize, levelHeight, hpad, highlights) {
     return [treeWidth, treeHeight];
 }
 
-function poseQuestion(canvas, ctx, qdiv) {
+function poseQuestion(canvas, ctx, qdiv, answeredCallback) {
     // Clear the canvas.
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -295,11 +311,13 @@ function poseQuestion(canvas, ctx, qdiv) {
     highlights[pathPair[1][1]] = { commanded: true };
     var wh = renderTree(ctx, tree, 12, 30, "   ", highlights);
 
+    //console.log("COMMANDS", checkCCommand(tree, pathPair[0][1], pathPair[1][1]));
+
     while (qdiv.hasChildNodes()) {
         qdiv.removeChild(qdiv.lastChild);
     }
 
-    qdiv.style.position = 'relative';
+    qdiv.style.position = 'absolute';
     qdiv.style.top = wh[1] + 'px';
     qdiv.style.width = wh[0] + 'px';
     qdiv.style.textAlign = 'center';
@@ -310,11 +328,50 @@ function poseQuestion(canvas, ctx, qdiv) {
     q.style.position = "relative";
     q.style.top = "2em";
     q.style.textAlign = 'center';
+    q.style.fontWeight = 'bold';
 
     q.appendChild(
         document.createTextNode("Does " + pathPair[0][0].label + " c-command " + pathPair[1][0].label + "?")
     );
+
+    var response = document.createElement("ul");
+    response.style.textAlign = "left";
+    response.style.width = "4em";
+    response.style.marginLeft = "auto";
+    response.style.marginRight = "auto";
+    response.style.fontWeight = 'normal';
+    var li1 = document.createElement("li");
+    li1.className = "clickable";
+    li1.style.paddingBottom = "0.5em";
+    li1.appendChild(document.createTextNode("Yes"));
+    var li2 = document.createElement("li");
+    li2.className = "clickable";
+    li2.appendChild(document.createTextNode("No"));
+    response.appendChild(li1);
+    response.appendChild(li2);
+    q.appendChild(response);
+
+    li1.addEventListener("click", handleYes);
+    li2.addEventListener("click", handleNo);
+
     qdiv.appendChild(q);
+
+    function rem() {
+        li1.removeEventListener("click", handleYes);
+        li2.removeEventListener("click", handleNo);
+        li1.className = "";
+        li2.className = "";
+    }
+    function handleYes(e) {
+        e.preventDefault();
+        rem();
+        answeredCallback(checkCCommand(tree, pathPair[0][1], pathPair[1][1]));
+    }
+    function handleNo(e) {
+        e.preventDefault();
+        rem();
+        answeredCallback(! checkCCommand(tree, pathPair[0][1], pathPair[1][1]));
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
@@ -332,5 +389,51 @@ document.addEventListener("DOMContentLoaded", function(event) {
     var ctx = canvas.getContext("2d");
     ctx.scale(SCALE, SCALE);
 
-    poseQuestion(canvas, ctx, document.getElementById("question"));
+    var qdiv = document.getElementById("question");
+    poseQuestion(canvas, ctx, qdiv, handleAnswer);
+    function handleAnswer(correct) {
+        var answerTime = new Date().getTime();
+
+        var d = document.createElement("div");
+        d.style.fontWeight = 'bold';
+        d.style.marginLeft = "auto";
+        d.style.marginRight = "auto";
+        d.style.display = "table";
+        d.style.marginTop = "1em";
+        if (correct) {
+            d.style.color = 'green';
+            d.appendChild(document.createTextNode("CORRECT"));
+        }
+        else {
+            d.style.color = 'red';
+            d.appendChild(document.createTextNode("INCORRECT"));
+        }
+
+        var next = document.createElement("div");
+        next.appendChild(document.createTextNode("click anywhere for next question"));
+        next.style.marginTop = "1em";
+        next.style.fontStyle = "italic";
+        next.style.fontWeight = 'normal';
+        
+        qdiv.firstChild.appendChild(d);
+        qdiv.firstChild.appendChild(next);
+
+        window.addEventListener("click", click);
+        window.addEventListener("keydown", key);
+        function rem() {
+            window.removeEventListener("click", click);
+            window.removeEventListener("keydown", key);
+        }
+        function key(e) {
+            rem();
+            poseQuestion(canvas, ctx, qdiv, handleAnswer);
+        }
+        function click (e) {
+            if (new Date().getTime() - answerTime < 100)
+                return;
+
+            rem();
+            poseQuestion(canvas, ctx, qdiv, handleAnswer);
+        };
+    }
 });

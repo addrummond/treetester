@@ -2,12 +2,26 @@
 <html>
 <head>
 <title>C-command test</title>
+<style>
+.clickable {
+    text-decoration: none;
+    cursor: pointer;
+}
+.clickable:hover {
+    text-decoration: underline;
+}
+</style>
 <script src="command.js" type="text/javascript"></script>
 </head>
 <body>
+<div>
+<small><i>A c-commands B iff the first branching node dominating A also dominates B, and neither of A or B dominates the other.</i></small>
+</div>
+<div id="container">
 <div id="question">
 </div>
 <canvas id="canvas">
 </canvas>
+</div>
 </body>
 </html>
