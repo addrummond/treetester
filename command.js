@@ -175,70 +175,15 @@ function widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset) {
     }
 }
 
-function leftXs(positionTree) {
-    let r = [ ];
-    for (;;) {
-        r.push(positionTree.x - positionTree.labelWidth/2);
-        if (positionTree.children.length == 0)
-            break;
-        else
-            positionTree = positionTree.children[0];
-    }
-    return r;
-}
-
-function rightXs(positionTree) {
-    let r = [ ];
-    for (;;) {
-        r.push(positionTree.x + positionTree.labelWidth/2);
-        if (positionTree.children.length == 0)
-            break;
-        else
-            positionTree = positionTree.children[positionTree.children.length-1];
-    }
-    return r;
-}
-
 function shiftPositionTreeX(positionTree, x) {
     positionTree.x += x;
     for (var i = 0; i < positionTree.children.length; ++i)
         shiftPositionTreeX(positionTree.children[i], x);
 }
 
-function horizontalSquishPositionTree(tree) {
-    if (tree.children.length > 0) {
-        let squished = [ ];
-        for (var i = 0; i < tree.children.length; ++i) {
-            squished[i] = horizontalSquishPositionTree(tree.children[i]);
-        }
-        var totalDiff = 0;
-        for (var i = 0; i < tree.children.length - 1; ++i) {
-            var target = tree.children[i];
-            var moving = tree.children[i + 1];
-            var tx = rightXs(target);
-            var mx = leftXs(moving);
-            var minDiff = Number.POSITIVE_INFINITY;
-            var minDiffJ = 0;
-            for (var j = 0; j < tx.length && j < mx.length; ++j) {
-                var diff = mx[j] - tx[j];
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    minDiffJ = j;
-                }
-            }
-            totalDiff += minDiff;
-            var r = totalDiff/2;
-            var l = -totalDiff/2;
-            shiftPositionTreeX(target, r);
-            shiftPositionTreeX(moving, l);
-        }
-    }
-}
-
 function layoutTree(tree, measureWidth, levelHeight, xOffset, yOffset) {
     tree = treeToSimpleWidthTree(tree, measureWidth);
     tree = widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset);
-    //horizontalSquishPositionTree(tree);
     return tree;
 }
 
