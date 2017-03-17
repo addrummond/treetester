@@ -76,7 +76,7 @@ function randomTree(nPhrases, letters) {
 }
 
 function randomPathPair(tree) {
-    let paths = [ ];
+    var paths = [ ];
 
     (function rec (tree, path) {
         paths.push([tree, path]);
@@ -160,7 +160,7 @@ function widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset) {
             xo += tree.children[i].width;
         }
 
-        let w = tree.width;
+        var w = tree.width;
 
         var x = xOffset + (tree.width / 2);
 
@@ -322,8 +322,8 @@ function poseQuestion(canvas, ctx, qdiv, answeredCallback) {
 document.addEventListener("DOMContentLoaded", function(event) {
     var SCALE = 2;
 
-    let w = document.documentElement.clientWidth || 500;
-    let h = document.documentElement.clientHeight || 500;
+    var w = document.documentElement.clientWidth || 500;
+    var h = document.documentElement.clientHeight || 500;
 
     var canvas = document.getElementById("canvas");
     canvas.width = w*SCALE;
