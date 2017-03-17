@@ -175,12 +175,6 @@ function widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset) {
     }
 }
 
-function shiftPositionTreeX(positionTree, x) {
-    positionTree.x += x;
-    for (var i = 0; i < positionTree.children.length; ++i)
-        shiftPositionTreeX(positionTree.children[i], x);
-}
-
 function layoutTree(tree, measureWidth, levelHeight, xOffset, yOffset) {
     tree = treeToSimpleWidthTree(tree, measureWidth);
     tree = widthTreeToPositionTree(tree, levelHeight, xOffset, yOffset);
