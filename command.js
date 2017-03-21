@@ -285,16 +285,19 @@ function poseQuestion(canvas, ctx, qdiv, container, answeredCallback) {
 
     var response = document.createElement("ul");
     response.style.textAlign = "left";
-    response.style.width = "4em";
+    response.style.display = "table";
     response.style.marginLeft = "auto";
     response.style.marginRight = "auto";
     response.style.fontWeight = 'normal';
-    response.style.fontSize = 'large';
+    response.style.fontSize = 'x-large';
+    response.style.paddingLeft = "0px";
     var li1 = document.createElement("li");
     li1.className = "clickable";
-    li1.style.paddingBottom = "1em";
+    li1.style.display = "inline";
     li1.appendChild(document.createTextNode("Yes"));
     var li2 = document.createElement("li");
+    li2.style.display = "inline";
+    li2.style.marginLeft = "4em";
     li2.className = "clickable";
     li2.appendChild(document.createTextNode("No"));
     response.appendChild(li1);
@@ -397,7 +400,30 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 return;
 
             rem();
-            poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
+            
+            var start = new Date().getTime();
+            var ANIM_TIME = 1000;
+            var id = setInterval(f, 50);
+            var not_posed = true;
+            function f () {
+                let elapsed = new Date().getTime() - start;
+                if (elapsed >= ANIM_TIME) {
+                    clearInterval(id);
+                    container.style.opacity = 1.0;
+                }
+                else if (elapsed >= ANIM_TIME/2) {
+                    if (not_posed) {
+                        not_posed = false;
+                        poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
+                    }
+                    let op = (elapsed-ANIM_TIME/2)/(ANIM_TIME/2);
+                    container.style.opacity = op;
+                }
+                else {
+                    let op = (1.0 - elapsed/(ANIM_TIME/2));
+                    container.style.opacity = op;
+                }
+            }
         };
     }
 });
