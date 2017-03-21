@@ -78,7 +78,6 @@ function randomTree(nPhrases, letters) {
             }
             else {
                 // It has a comp but no spec.
-                console.log(treelets[0].children.length, treelets[0].children[0].children.length);
                 treelets[0].children.unshift(treelets[treelets.length-1]);
                 treelets.splice(treelets.length-1, 1); // Remove last element
             }
@@ -249,7 +248,7 @@ function renderTree(ctx, tree, fontSize, levelHeight, hpad, highlights) {
     return [treeWidth, treeHeight];
 }
 
-function poseQuestion(canvas, ctx, qdiv, answeredCallback) {
+function poseQuestion(canvas, ctx, qdiv, container, answeredCallback) {
     // Clear the canvas.
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -262,8 +261,6 @@ function poseQuestion(canvas, ctx, qdiv, answeredCallback) {
     highlights[pathPair[0][1]] = { commander: true };
     highlights[pathPair[1][1]] = { commanded: true };
     var wh = renderTree(ctx, tree, 12, 30, "   ", highlights);
-
-    //console.log("COMMANDS", checkCCommand(tree, pathPair[0][1], pathPair[1][1]));
 
     while (qdiv.hasChildNodes()) {
         qdiv.removeChild(qdiv.lastChild);
@@ -292,9 +289,10 @@ function poseQuestion(canvas, ctx, qdiv, answeredCallback) {
     response.style.marginLeft = "auto";
     response.style.marginRight = "auto";
     response.style.fontWeight = 'normal';
+    response.style.fontSize = 'large';
     var li1 = document.createElement("li");
     li1.className = "clickable";
-    li1.style.paddingBottom = "0.5em";
+    li1.style.paddingBottom = "1em";
     li1.appendChild(document.createTextNode("Yes"));
     var li2 = document.createElement("li");
     li2.className = "clickable";
@@ -307,6 +305,10 @@ function poseQuestion(canvas, ctx, qdiv, answeredCallback) {
     li2.addEventListener("click", handleNo);
 
     qdiv.appendChild(q);
+
+    let pw = parseInt(Math.round(wh[0] + 8)) + 'px';
+    container.style.width = pw;
+    container.style.maxWidth = pw;
 
     function rem() {
         li1.removeEventListener("click", handleYes);
@@ -329,8 +331,12 @@ function poseQuestion(canvas, ctx, qdiv, answeredCallback) {
 document.addEventListener("DOMContentLoaded", function(event) {
     var SCALE = 2;
 
-    var w = document.documentElement.clientWidth || 500;
-    var h = document.documentElement.clientHeight || 500;
+    var w = parseInt(Math.round(0.9 * Math.max(document.documentElement.clientWidth, window.innerWidth || 0)));
+    var h = parseInt(Math.round(0.9 * Math.max(document.documentElement.clientHeight, window.innerHeight || 0)));
+    if (! w)
+        w = 500;
+    if (! h)
+        h = 500;
 
     var canvas = document.getElementById("canvas");
     canvas.width = w*SCALE;
@@ -341,8 +347,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
     var ctx = canvas.getContext("2d");
     ctx.scale(SCALE, SCALE);
 
+    var container = document.getElementById("container");
     var qdiv = document.getElementById("question");
-    poseQuestion(canvas, ctx, qdiv, handleAnswer);
+    poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
     function handleAnswer(correct) {
         var answerTime = new Date().getTime();
 
@@ -362,18 +369,23 @@ document.addEventListener("DOMContentLoaded", function(event) {
         }
 
         var next = document.createElement("div");
-        next.appendChild(document.createTextNode("click anywhere for next question"));
+        next.appendChild(document.createTextNode("click/touch anywhere for next question"));
         next.style.marginTop = "1em";
         next.style.fontStyle = "italic";
         next.style.fontWeight = 'normal';
+
+        while (qdiv.firstChild.hasChildNodes())
+            qdiv.firstChild.removeChild(qdiv.firstChild.lastChild);
         
         qdiv.firstChild.appendChild(d);
         qdiv.firstChild.appendChild(next);
 
         window.addEventListener("click", click);
+        window.addEventListener("touchstart", click);
         window.addEventListener("keydown", key);
         function rem() {
             window.removeEventListener("click", click);
+            window.removeEventListener("touchstart", click);
             window.removeEventListener("keydown", key);
         }
         function key(e) {
@@ -385,7 +397,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
                 return;
 
             rem();
-            poseQuestion(canvas, ctx, qdiv, handleAnswer);
+            poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
         };
     }
 });
