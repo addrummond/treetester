@@ -304,18 +304,18 @@ function poseQuestion(canvas, ctx, qdiv, container, answeredCallback) {
     response.appendChild(li2);
     q.appendChild(response);
 
-    li1.addEventListener("click", handleYes);
-    li2.addEventListener("click", handleNo);
+    addEventListenerShim(li1, "click", handleYes);
+    addEventListenerShim(li2, "click", handleNo);
 
     qdiv.appendChild(q);
 
-    let pw = parseInt(Math.round(wh[0] + 8)) + 'px';
+    var pw = parseInt(Math.round(wh[0] + 8)) + 'px';
     container.style.width = pw;
     container.style.maxWidth = pw;
 
     function rem() {
-        li1.removeEventListener("click", handleYes);
-        li2.removeEventListener("click", handleNo);
+        removeEventListenerShim(li1, "click", handleYes);
+        removeEventListenerShim(li2, "click", handleNo);
         li1.className = "";
         li2.className = "";
     }
@@ -331,7 +331,24 @@ function poseQuestion(canvas, ctx, qdiv, container, answeredCallback) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function(event) {
+function addEventListenerShim(obj, event, handler) {
+    if (obj.addEventListener) {
+        obj.addEventListener(event, handler);
+    }
+    else {
+        obj.attachEvent(event, handler);
+    }
+}
+function removeEventListenerShim(obj, event, handler) {
+    if (obj.removeEventListener) {
+        obj.removeEventListener(event, handler);
+    }
+    else {
+        obj.detachEvent(event, handler);
+    }
+}
+
+addEventListenerShim(document, "DOMContentLoaded", function(event) {
     var SCALE = 2;
 
     var w = parseInt(Math.round(0.9 * Math.max(document.documentElement.clientWidth, window.innerWidth || 0)));
@@ -383,13 +400,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
         qdiv.firstChild.appendChild(d);
         qdiv.firstChild.appendChild(next);
 
-        window.addEventListener("click", click);
-        window.addEventListener("touchstart", click);
-        window.addEventListener("keydown", key);
+        addEventListenerShim(window, "click", click);
+        addEventListenerShim(window, "touchstart", click);
+        addEventListenerShim(window, "keydown", key);
         function rem() {
-            window.removeEventListener("click", click);
-            window.removeEventListener("touchstart", click);
-            window.removeEventListener("keydown", key);
+            removeEventListenerShim(window, "click", click);
+            removeEventListenerShim(window, "touchstart", click);
+            removeEventListenerShim(window, "keydown", key);
         }
         function key(e) {
             rem();
@@ -406,7 +423,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
             var id = setInterval(f, 50);
             var not_posed = true;
             function f () {
-                let elapsed = new Date().getTime() - start;
+                var elapsed = new Date().getTime() - start;
                 if (elapsed >= ANIM_TIME) {
                     clearInterval(id);
                     container.style.opacity = 1.0;
@@ -416,11 +433,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
                         not_posed = false;
                         poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
                     }
-                    let op = (elapsed-ANIM_TIME/2)/(ANIM_TIME/2);
+                    var op = (elapsed-ANIM_TIME/2)/(ANIM_TIME/2);
                     container.style.opacity = op;
                 }
                 else {
-                    let op = (1.0 - elapsed/(ANIM_TIME/2));
+                    var op = (1.0 - elapsed/(ANIM_TIME/2));
                     container.style.opacity = op;
                 }
             }
