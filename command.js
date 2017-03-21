@@ -348,7 +348,8 @@ function removeEventListenerShim(obj, event, handler) {
     }
 }
 
-addEventListenerShim(document, "DOMContentLoaded", function(event) {
+// Deprecated way of adding the event handler, but works on IE8.
+window.onload = function(event) {
     var SCALE = 2;
 
     var w = parseInt(Math.round(0.9 * Math.max(document.documentElement.clientWidth, window.innerWidth || 0)));
@@ -443,4 +444,4 @@ addEventListenerShim(document, "DOMContentLoaded", function(event) {
             }
         };
     }
-});
+};
