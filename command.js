@@ -46,7 +46,13 @@ function randomTree(nPhrases, letters) {
     shuffle(treelets);
 
     while (treelets.length > 1) {
-        if (treelets[0].children.length == 1 && treelets[0].children[0].children.length == 1) {
+        if (treelets[0].children.length == 2 && treelets[0].children[0].children.length == 2) {
+            // If the first treelet has both a head and a spec, put it at the end.
+            var tmp = treelets[treelets.length - 1];
+            treelets[treelets.length-1] = treelets[0];
+            treelets[0] = tmp;
+        }
+        else if (treelets[0].children.length == 1 && treelets[0].children[0].children.length == 1) {
             // We can add either a head or a specifier, so choose at random.
             if (Math.random() < 0.5) {
                 treelets[0].children.unshift(treelets[treelets.length-1]);
@@ -56,19 +62,26 @@ function randomTree(nPhrases, letters) {
             }
             treelets.splice(treelets.length-1, 1); // Remove last element
         }
-        else if (treelets[0].children.length == 2 && treelets[0].children[0].length == 1) {
-            treelets[0].children[0].children.push(treelets[treelets.length-1])
-            treelets.splice(treelets.length-1, 1); // Remove last element
-        }
-        else if (treelets[0].children.length == 1) {
-            treelets[0].children.unshift(treelets[treelets.length-1]);
-            treelets.splice(treelets.length-1, 1); // Remove last element
-        }
         else {
-            // If the first treelet has both a head and a spec, put it at the end.
-            var tmp = treelets[treelets.length - 1];
-            treelets[treelets.length-1] = treelets[0];
-            treelets[0] = tmp;
+            // Otherwise it has only a spec or only a comp, in which case we put it
+            // at the end 50% of the time so that we get some phrases with just specs
+            // and just comps.
+            if (Math.random() < 0.5) {
+                var tmp = treelets[treelets.length - 1];
+                treelets[treelets.length-1] = treelets[0];
+                treelets[0] = tmp;
+            }
+            else if (treelets[0].children.length == 2 && treelets[0].children[0].children.length == 1) {
+                // It has a spec but no comp.
+                treelets[0].children[0].children.push(treelets[treelets.length-1])
+                treelets.splice(treelets.length-1, 1); // Remove last element
+            }
+            else {
+                // It has a comp but no spec.
+                console.log(treelets[0].children.length, treelets[0].children[0].children.length);
+                treelets[0].children.unshift(treelets[treelets.length-1]);
+                treelets.splice(treelets.length-1, 1); // Remove last element
+            }
         }
     }
 
