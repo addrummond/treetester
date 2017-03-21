@@ -320,14 +320,18 @@ function poseQuestion(canvas, ctx, qdiv, container, answeredCallback) {
         li2.className = "";
     }
     function handleYes(e) {
-        e.preventDefault();
+        if (e.preventDefault)
+            e.preventDefault();
         rem();
         answeredCallback(checkCCommand(tree, pathPair[0][1], pathPair[1][1]));
+        return false;
     }
     function handleNo(e) {
-        e.preventDefault();
+        if (e.preventDefault)
+            e.preventDefault();
         rem();
         answeredCallback(! checkCCommand(tree, pathPair[0][1], pathPair[1][1]));
+        return false;
     }
 }
 
@@ -336,7 +340,7 @@ function addEventListenerShim(obj, event, handler) {
         obj.addEventListener(event, handler);
     }
     else {
-        obj.attachEvent(event, handler);
+        obj.attachEvent('on' + event, handler);
     }
 }
 function removeEventListenerShim(obj, event, handler) {
@@ -344,13 +348,13 @@ function removeEventListenerShim(obj, event, handler) {
         obj.removeEventListener(event, handler);
     }
     else {
-        obj.detachEvent(event, handler);
+        obj.detachEvent('on' + event, handler);
     }
 }
 
 // Deprecated way of adding the event handler, but works on IE8.
 window.onload = function(event) {
-    var SCALE = 2;
+    var SCALE = (typeof(DO_NOT_SCALE) != 'undefined' && DO_NOT_SCALE ? 1 : 2);
 
     var w = parseInt(Math.round(0.9 * Math.max(document.documentElement.clientWidth, window.innerWidth || 0)));
     var h = parseInt(Math.round(0.9 * Math.max(document.documentElement.clientHeight, window.innerHeight || 0)));
@@ -401,13 +405,13 @@ window.onload = function(event) {
         qdiv.firstChild.appendChild(d);
         qdiv.firstChild.appendChild(next);
 
-        addEventListenerShim(window, "click", click);
+        addEventListenerShim(document, "click", click);
         addEventListenerShim(window, "touchstart", click);
-        addEventListenerShim(window, "keydown", key);
+        addEventListenerShim(document, "keydown", key);
         function rem() {
-            removeEventListenerShim(window, "click", click);
+            removeEventListenerShim(document, "click", click);
             removeEventListenerShim(window, "touchstart", click);
-            removeEventListenerShim(window, "keydown", key);
+            removeEventListenerShim(document, "keydown", key);
         }
         function key(e) {
             rem();
@@ -421,26 +425,31 @@ window.onload = function(event) {
             
             var start = new Date().getTime();
             var ANIM_TIME = 1000;
-            var id = setInterval(f, 50);
-            var not_posed = true;
-            function f () {
-                var elapsed = new Date().getTime() - start;
-                if (elapsed >= ANIM_TIME) {
-                    clearInterval(id);
-                    container.style.opacity = 1.0;
-                }
-                else if (elapsed >= ANIM_TIME/2) {
-                    if (not_posed) {
-                        not_posed = false;
-                        poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
+            if (typeof(NO_FADE) == 'undefined' || !NO_FADE) {
+                var id = setInterval(f, 50);
+                var not_posed = true;
+                function f () {
+                    var elapsed = new Date().getTime() - start;
+                    if (elapsed >= ANIM_TIME) {
+                        clearInterval(id);
+                        container.style.opacity = 1.0;
                     }
-                    var op = (elapsed-ANIM_TIME/2)/(ANIM_TIME/2);
-                    container.style.opacity = op;
+                    else if (elapsed >= ANIM_TIME/2) {
+                        if (not_posed) {
+                            not_posed = false;
+                            poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
+                        }
+                        var op = (elapsed-ANIM_TIME/2)/(ANIM_TIME/2);
+                        container.style.opacity = op;
+                    }
+                    else {
+                        var op = (1.0 - elapsed/(ANIM_TIME/2));
+                        container.style.opacity = op;
+                    }
                 }
-                else {
-                    var op = (1.0 - elapsed/(ANIM_TIME/2));
-                    container.style.opacity = op;
-                }
+            }
+            else {
+                poseQuestion(canvas, ctx, qdiv, container, handleAnswer);
             }
         };
     }
