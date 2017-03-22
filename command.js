@@ -118,8 +118,8 @@ function checkCCommand(tree, path1, path2) {
     for (var i = 0; i < path1.length; ++i) {
         var c = path1.charCodeAt(i) - '0'.charCodeAt(0);
         commander = commander.children[c];
-        if (commander.children.length > 1)
-            lastNonunary = i;
+        if (i < path1.length - 1 && commander.children.length > 1)
+            lastNonunary = i+1;
     }
 
     return path2.indexOf(path1.substr(0, lastNonunary)) == 0;
